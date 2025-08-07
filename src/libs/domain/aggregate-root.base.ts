@@ -1,17 +1,15 @@
-// domain/AggregateRoot.ts
-
 import { BaseDomainEvent } from './domain-event.base';
 import { DomainEvents } from './domain.event';
 import { BaseEntity, BaseEntityProps } from './entity.base';
 import { UniqueEntityID } from './unique-entity-id';
 
-export abstract class AggregateRoot<
-    T extends string | number,
+export abstract class BaseAggregateRoot<
     ID extends string | number,
-> extends BaseEntity<BaseEntityProps<ID>, T> {
+    T extends BaseEntityProps<ID>,
+> extends BaseEntity<T, ID> {
     private _domainEvents: BaseDomainEvent[] = [];
 
-    get id(): UniqueEntityID<T> {
+    get id(): UniqueEntityID<ID> {
         return this._id;
     }
 

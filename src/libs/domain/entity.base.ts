@@ -23,13 +23,9 @@ export interface BaseEntityProps<ID extends string | number> {
     audit: AuditTrail;
 }
 
-export interface CreateEntityProps<T, ID extends string | number = string> {
-    id: UniqueEntityID<ID>;
+export interface CreateEntityProps<T, ID extends string | number>
+    extends BaseEntityProps<ID> {
     props: T;
-    createdAt?: Date;
-    updatedAt?: Date;
-    createdBy?: string;
-    updatedBy?: string;
 }
 
 export abstract class BaseEntity<EntityProps, ID extends string | number> {
@@ -46,9 +42,8 @@ export abstract class BaseEntity<EntityProps, ID extends string | number> {
         id,
         createdAt,
         updatedAt,
-        createdBy,
-        updatedBy,
         props,
+        audit: { createdBy, updatedBy } = {},
     }: CreateEntityProps<EntityProps, ID>) {
         if (!id || !(id instanceof UniqueEntityID)) {
             throw new ArgumentInvalidException('ID is invalid');

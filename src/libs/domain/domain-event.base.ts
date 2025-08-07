@@ -1,8 +1,6 @@
-// domain/events/BaseDomainEvent.ts
-
 import { UniqueEntityID } from './unique-entity-id';
 
-export interface IDomainEvent {
+export interface DomainEventInterface {
     dateTimeOccurred: Date;
     getAggregateId(): UniqueEntityID<string | number>;
 }
@@ -10,10 +8,12 @@ export interface IDomainEvent {
 export type DomainEventMetadata = {
     readonly timestamp: number;
     readonly causationId?: string;
+    readonly correlationId?: string;
     readonly userId?: string;
 };
 
-export abstract class BaseDomainEvent implements IDomainEvent {
+export abstract class BaseDomainEvent implements DomainEventInterface {
+    public readonly id: string;
     public readonly metadata: DomainEventMetadata;
     public readonly aggregateId: UniqueEntityID<string | number>;
     public readonly version: number = 1;
@@ -22,6 +22,7 @@ export abstract class BaseDomainEvent implements IDomainEvent {
         aggregateId: UniqueEntityID<string | number>;
         metadata?: DomainEventMetadata;
     }) {
+        this.id = crypto.randomUUID();
         this.aggregateId = props.aggregateId;
         this.metadata = {
             timestamp: props?.metadata?.timestamp || Date.now(),

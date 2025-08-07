@@ -1,16 +1,15 @@
-import { AggregateRoot } from './aggregate-root.base';
+import { BaseAggregateRoot } from './aggregate-root.base';
 import { BaseDomainEvent } from './domain-event.base';
 import { UniqueEntityID } from './unique-entity-id';
 
-// domain/events/DomainEvents.ts
 export class DomainEvents {
     private static handlersMap: {
         [key: string]: Array<(event: BaseDomainEvent) => void>;
     } = {};
-    private static markedAggregates: AggregateRoot<any, any>[] = [];
+    private static markedAggregates: BaseAggregateRoot<any, any>[] = [];
 
     public static markAggregateForDispatch(
-        aggregate: AggregateRoot<any, any>
+        aggregate: BaseAggregateRoot<any, any>
     ): void {
         const exists = !!this.findMarkedAggregateByID(aggregate.id);
         if (!exists) {
@@ -19,13 +18,13 @@ export class DomainEvents {
     }
 
     private static dispatchAggregateEvents(
-        aggregate: AggregateRoot<any, any>
+        aggregate: BaseAggregateRoot<any, any>
     ): void {
         aggregate.domainEvents.forEach(event => this.dispatch(event));
     }
 
     private static removeAggregateFromMarkedDispatchList(
-        aggregate: AggregateRoot<any, any>
+        aggregate: BaseAggregateRoot<any, any>
     ): void {
         const index = this.markedAggregates.findIndex(a =>
             a.id.equals(aggregate.id)
@@ -35,7 +34,7 @@ export class DomainEvents {
 
     private static findMarkedAggregateByID(
         id: UniqueEntityID<string | number>
-    ): AggregateRoot<any, any> {
+    ): BaseAggregateRoot<any, any> {
         return this.markedAggregates.find(a => a.id.equals(id));
     }
 
