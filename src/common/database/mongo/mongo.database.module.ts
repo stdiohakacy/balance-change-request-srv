@@ -12,10 +12,10 @@ export class DatabaseOptionModule {}
 
 @Global()
 @Module({})
-export class DatabaseModule {
+export class MongoDatabaseModule {
     static forRoot(): DynamicModule {
         return {
-            module: DatabaseModule,
+            module: MongoDatabaseModule,
             providers: [DatabaseService],
             exports: [DatabaseService],
             imports: [],

@@ -2,9 +2,9 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { DATABASE_CONNECTION_NAME } from '@common/database/mongo/constants/database.constant';
 import {
-    DatabaseModule,
+    MongoDatabaseModule,
     DatabaseOptionModule,
-} from '@common/database/mongo/database.module';
+} from '@common/database/mongo/mongo.database.module';
 import { MessageModule } from 'src/common/message/message.module';
 import { HelperModule } from 'src/common/helper/helper.module';
 import { RequestModule } from 'src/common/request/request.module';
@@ -103,7 +103,7 @@ import KeyvRedis from '@keyv/redis';
         AuthModule.forRoot(),
         ApiKeyModule.forRoot(),
         FileModule.forRoot(),
-        DatabaseModule.forRoot(),
+        MongoDatabaseModule.forRoot(),
         PaginationModule.forRoot(),
     ],
 })
