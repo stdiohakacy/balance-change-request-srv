@@ -1,0 +1,156 @@
+name: digital-wallet-microservices
+
+services:
+  redis:
+    image: redis:latest
+    container_name: redis
+    hostname: redis
+    restart: on-failure
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    networks:
+      - digital-wallet-network
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 30s
+      retries: 5
+  redis-bullboard:
+    image: deadly0/bull-board:3.2.6
+    container_name: redis-bullboard
+    hostname: redis-bullboard
+    restart: on-failure
+    ports:
+      - 3010:3000
+    networks:
+      - digital-wallet-network
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - BULL_PREFIX=bull
+      - USER_LOGIN=admin
+      - USER_PASSWORD=admin123
+    depends_on:
+      - redis
+  mongodb1:
+    image: mongo:latest
+    container_name: mongodb1
+    hostname: mongodb1
+    restart: on-failure
+    ports:
+      - '27017:27017'
+    links:
+      - mongodb2
+      - mongodb3
+    depends_on:
+      mongodb2:
+        condition: service_started
+      mongodb3:
+        condition: service_started
+    networks:
+      - digital-wallet-network
+    volumes:
+      - mongodb1_data:/data/db
+      - mongodb1_config:/data/configdb
+    command: mongod --bind_ip_all --replSet rs0 --port 27017
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    healthcheck:
+      test: echo "try { rs.status() } catch (err) { rs.initiate({_id:'rs0',members:[{_id:0,host:'host.docker.internal:27017',priority:1},{_id:1,host:'host.docker.internal:27018',priority:0.5},{_id:2,host:'host.docker.internal:27019',priority:0.5}]}) }" | mongosh --port 27017 --quiet
+      interval: 5s
+      timeout: 30s
+      start_period: 0s
+      start_interval: 1s
+      retries: 10
+  mongodb2:
+    image: mongo:latest
+    container_name: mongodb2
+    hostname: mongodb2
+    networks:
+      - digital-wallet-network
+    restart: on-failure
+    ports:
+      - '27018:27018'
+    volumes:
+      - mongodb2_data:/data/db
+      - mongodb2_config:/data/configdb
+    command: mongod --bind_ip_all --replSet rs0 --port 27018
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+  mongodb3:
+    image: mongo:latest
+    container_name: mongodb3
+    hostname: mongodb3
+    networks:
+      - digital-wallet-network
+    restart: on-failure
+    ports:
+      - '27019:27019'
+    volumes:
+      - mongodb3_data:/data/db
+      - mongodb3_config:/data/configdb
+    command: mongod --bind_ip_all --replSet rs0 --port 27019
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: kafka_container
+    restart: always
+    ports:
+      - '9092:9092'
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+    depends_on:
+      - zookeeper
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: zookeeper_container
+    restart: always
+    ports:
+      - '2181:2181'
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper/data
+      - zookeeper_logs:/var/lib/zookeeper/log
+
+  postgres:
+    image: postgres:15
+    container_name: postgres_container
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres # digital_wallet_db
+    ports:
+      - '5432:5432'
+    networks:
+      - digital-wallet-network
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  mongodb1_data:
+  mongodb2_data:
+  mongodb3_data:
+  mongodb1_config:
+  mongodb2_config:
+  mongodb3_config:
+  redis_data:
+  zookeeper_data:
+  zookeeper_logs:
+  postgres_data:
+
+networks:
+  digital-wallet-network:
+    driver: bridge
